@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourcePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for Resources (should be lowercase with no spaces)"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrator password of the SQL logical server."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "defaultValue": "dbadmin",
+      "metadata": {
+        "description": "The administrator username of the SQL logical server."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}-non-iac-sqlserver', parameters('resourcePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')), format('{0}-non-iac-db', parameters('resourcePrefix')))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2024-05-01-preview",
+      "name": "[format('{0}/{1}', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')), format('{0}-FirewallRule1', parameters('resourcePrefix')))]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "255.255.255.255"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}-non-iac-asp', parameters('resourcePrefix'))]",
+      "location": "[parameters('location')]",
+      "kind": "app,linux,container",
+      "properties": {
+        "reserved": true
+      },
+      "sku": {
+        "name": "B1",
+        "tier": "Basic"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}-non-iac-app', parameters('resourcePrefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('{0}-non-iac-asp', parameters('resourcePrefix')))]",
+        "siteConfig": {
+          "linuxFxVersion": "DOCKER|corndeldevopscourse/mod12app:latest",
+          "appSettings": [
+            {
+              "name": "CONNECTION_STRING",
+              "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Persist Security Info=False;User ID={2};Password={3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', reference(resourceId('Microsoft.Sql/servers', format('{0}-non-iac-sqlserver', parameters('resourcePrefix'))), '2022-05-01-preview').fullyQualifiedDomainName, format('{0}-non-iac-db', parameters('resourcePrefix')), parameters('administratorLogin'), parameters('administratorLoginPassword'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('{0}-non-iac-asp', parameters('resourcePrefix')))]",
+        "[resourceId('Microsoft.Sql/servers/databases', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')), format('{0}-non-iac-db', parameters('resourcePrefix')))]",
+        "[resourceId('Microsoft.Sql/servers', format('{0}-non-iac-sqlserver', parameters('resourcePrefix')))]"
+      ]
+    }
+  ]
+}
