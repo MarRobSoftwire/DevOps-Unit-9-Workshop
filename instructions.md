@@ -342,7 +342,7 @@ At this point you might be thinking, we're finished here right? We're managing o
 
 Well, it would be nice if we were confident Terraform could restore our system from scratch if something were to happen to it one day (following the principle of *Immutable Infrastructure*)... 
 
-## 6.1 Populating the Database
+### 6.1 Populating the Database
 
 When it comes to disaster recovery, the first thing we should worry about is our data. Now in a real life scenario we'd be talking about backup plans, off-site storage and recovery times (including Recovery Point Objectives (RPO) and Recovery Time Objectives (RTO)). 
 
@@ -356,7 +356,7 @@ Consider using a [`local-exec` provisioner](https://developer.hashicorp.com/terr
 
 </details>
 
-## 6.2 Add a Staging Environment
+### 6.2 Add a Staging Environment
 
 Now at this point you might be confident enough to believe we can run `terraform destroy` & `terraform apply` and everything will be fine (please don't try this; things will break!).
 
@@ -394,3 +394,35 @@ This may be a good opportunity to review how we setup this scenario (by reviewin
   * Bicep is converted to ARM Template syntax as part of the deployment process.
 * Notice how we had to provide a suitable password rather than let the IaC tool generate one for us (Bicep/ARM does not support the generation of random passwords)
 * Furthermore Bicep/ARM deployments don't really have a notion of **State**. Instead they have a scope (be it a *Resource Group*, *Subscription* or *Management Group*) and a [**deployment mode**](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-modes) of either *incremental* or *complete*.
+
+## Step 7 - Automating Terraform
+
+Our current use case for Terraform is to run the CLI command from a terminal as an interactive user wanting to make immediate infrastructure changes.
+
+Next we're going to look at a couple of scenarios where we'd want to automate the application of Terraform scripts.
+
+### 7.1 - Running Terraform as part of a CD pipeline
+
+CD Pipelines aren't just for deploying application code. Let's use Terraform to deploy infrastructure changes as well.
+
+The biggest challenge here is going to be authentication. The user credentials provided by ACG are designed for an interactive login via a prompt and is not designed to be used in automation scenarios. Instead we want to authenticate as a machine identity (called a **Service Principal**).
+
+Conveniently ACG creates a service principal for you when setting up your cloud environment:
+
+![ACG Service Principal Credentials](./images/acg_service_principal.jpg)
+
+The Client ID & Client Secret essentially act as the username and password.
+
+> Please note that the ACG cloud sandbox does not allow you to create your own service principals. Normally this would be done either via the Azure portal (under *App Registrations*) or via the command `az ad sp create-for-rbac`
+
+[The instructions for authenticating via a service principal & Terraform can be found here.](https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure-with-service-principle?tabs=bash#specify-service-principal-credentials-in-environment-variables)
+* You can find your subscription ID on the resource group page (under "Essentials") and the Tenant ID by looking up "Entra ID" in the portal's search bar
+
+With the issue of authentication addressed you can now try deploying your Terraform scripts via your CI/CD platform of choice.
+* Due to [Hashicorp's license changes](https://www.hashicorp.com/en/license-faq) many of the platforms no longer come with Terraform pre-installed. 
+  * GitHub actions has [a `setup-terraform` action](https://github.com/hashicorp/setup-terraform)
+  * GitLab recommends the use of [an OpenTofu Component](https://docs.gitlab.com/ee/user/infrastructure/iac/index.html#quickstart-an-opentofu-project-in-pipelines) (where OpenTofu is essentially a drop-in replacement for Terraform)
+
+**Things to watch out for when writing your pipeline:**
+- When adding the `terraform apply` command to your deployment job, include the `-auto-approve` flag because we want the pipeline to be non-interactive
+- Either set values for your input variables with `-var` tags, or set environment variables. E.g. an environment variable called `TF_VAR_client_secret` would automatically get used for a terraform input variable called `client_secret`
