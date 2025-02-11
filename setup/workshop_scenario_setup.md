@@ -32,4 +32,4 @@ Once the deploy script has finished you should see 4 resources in your resource 
 
 It may take some time but eventually the page should load saying that it has successfully connected to the database.
 
-If you've got this far then congrats! You've successfully setup the scenario and proceed to [the main instructions here](../instructions.md)
+If you've got this far then congratulations! You've successfully setup the scenario and can proceed to [the main instructions here](../instructions.md)
