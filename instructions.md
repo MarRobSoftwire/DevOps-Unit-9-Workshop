@@ -260,7 +260,12 @@ Make sure the names of the resources exactly match what already exists in Azure.
 
 </details>
 
-### 4.4 Prevent Destroy
+
+## Step 5 - Improvements
+
+OK we now have reached the point where our infrastructure is being managed by Terraform and we can make changes as needed by updating our code. Great! However this is a good point to stop and think, are we following best practice? What can go wrong?
+
+### 5.1 Prevent Destroy
 
 Terraform is a powerful tool that makes it easy to create, change and destroy Cloud resources.
 This is generally a great help when managing infrastructure, but also comes with risks.
@@ -281,16 +286,13 @@ If you run `terraform plan` now, after changing the database name, Terraform wil
 
 > If you remove the `prevent_destroy` directive from the configuration you'll be able to delete the resource again. That means if you remove the `azurerm_mssql_database` resource completely Terraform will still try and destroy it.
 
-### 4.5 Update connection string
+### 5.2 Update connection string
 
 Update the `CONNECTION_STRING` App Setting in the App Service Terraform configuration to reference your Database resources rather than being hard coded.
 
 > Terraform resources export attributes that could be helpful here, for example `azurerm_mssql_server` exports the [`fully_qualified_domain_name`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/mssql_server#fully_qualified_domain_name) attribute.
 
-
-## Step 5 - Improvements
-
-### 5.1 Outputs
+### 5.3 Outputs
 
 Terraform has a concept of [Output Values](https://www.terraform.io/docs/language/values/outputs.html) that are printed out when you run a plan or apply.
 These are useful if there are values that you need to feed into another system, or if you start splitting up your Terraform config into modules.
@@ -305,7 +307,7 @@ output "webapp_hostname" {
 
 If you run `terraform apply` you should see your site hostname printed out at the end of the console output.
 
-### 5.2 Store state in Azure blob
+### 5.4 Store state in Azure blob
 
 Currently all of our infrastructure's state is being stored on your local machine so only you can make changes; neither you nor your teammates will appreciate that if you ever want to go on holiday! We should instead store our state in a shared location that other team members can access.
 
@@ -325,8 +327,61 @@ backend "azurerm" {
 
 Your Terraform state is now stored in the remote blob and can be used by other developers. Keep in mind that the remote state includes all the details about your infrastructure, including passwords, so you should be careful who you share access with.
 
+### 5.5 Random database password
 
-### 5.3 Compare Terraform with ARM/Bicep Templates
+Use the [`random_password`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) resource to generate the database password, rather than passing it in as a variable.
+
+Create the `random_password` resource in your `main.tf` file. You'll want to set `min_upper`, `min_lower` and `min_numeric` to at least 1 to make sure you satisfy [the password requirements for Azure databases](https://learn.microsoft.com/en-us/sql/relational-databases/security/password-policy?view=sql-server-ver16#password-complexity).
+
+Make sure the random password `result` is used by both the Database Server and App Service, then `apply` the changes.
+
+
+## Step 6 - Disaster Recovery
+
+At this point you might be thinking, we're finished here right? We're managing our infrastructure with Terraform and tried to follow best practice, what more is there to do?
+
+Well, it would be nice if we were confident Terraform could restore our system from scratch if something were to happen to it one day (following the principle of *Immutable Infrastructure*)... 
+
+## 6.1 Populating the Database
+
+When it comes to disaster recovery, the first thing we should worry about is our data. Now in a real life scenario we'd be talking about backup plans, off-site storage and recovery times (including Recovery Point Objectives (RPO) and Recovery Time Objectives (RTO)). 
+
+For this exercise we'll simply focus on how to re-populate the database using a SQL script file.
+
+Notice [from our original setup script](./setup/deploy_scenario.ps1) that we had to use the `sqlcmd` tool to seed the database after it was created. Is this something we can manage within our Terraform scripts?
+
+<details><summary>Hint</summary>
+
+Consider using a [`local-exec` provisioner](https://developer.hashicorp.com/terraform/language/resources/provisioners/local-exec).
+
+</details>
+
+## 6.2 Add a Staging Environment
+
+Now at this point you might be confident enough to believe we can run `terraform destroy` & `terraform apply` and everything will be fine (please don't try this; things will break!).
+
+One of the big advantages of Infrastructure as Code is that it allows you to easily set up (and tear down) test environments that closely match your production infrastructure.
+Let's set up a staging environment to confirm that we can safely rebuild a working production environment.
+
+We will need to give resources in our staging environment different names in Azure so they don't clash with our existing infrastructure.
+It's up to you how you do this, but a common way is to define a "prefix" variable and start all the names of your resources with that prefix, e.g `name = "${var.prefix}-terraformed-asp"`.
+If your existing resources don't have a common prefix, then your prefix can be the empty string for this set of infrastructure.
+
+Once you've done that, we need a way of managing separate environments from the same Terraform config. One way of managing multiple environments with Terraform is using [workspaces](https://www.terraform.io/docs/language/state/workspaces.html).
+Have a read of the documentation and create a new Terraform workspace.
+
+Bring up another copy of your infrastructure with a different prefix, in this new workspace. You'll notice that something isn't working; can you spot what is missing from our Terraform config?
+
+<details><summary>Hint</summary>
+
+You should find that there is no connectivity between the App Service and the Database. You'll need to setup an `azurerm_mssql_firewall_rule` to provide DB access from the App Service.
+
+</details>
+
+It's probably worth having a quick think *why* this was missed when we were building our original Terraform config in the earlier steps. How could we have caught this omission?
+
+
+### (Bonus/Stretch) Compare Terraform with ARM/Bicep Templates
 
 Now that you have fully specified all cloud resources in your Terraform scripts it's worth comparing how this might look with Azure's built-in Infrastructure as Code tools:
 * ARM Templates ([example here](./setup/scenario.json))
@@ -339,39 +394,3 @@ This may be a good opportunity to review how we setup this scenario (by reviewin
   * Bicep is converted to ARM Template syntax as part of the deployment process.
 * Notice how we had to provide a suitable password rather than let the IaC tool generate one for us (Bicep/ARM does not support the generation of random passwords)
 * Furthermore Bicep/ARM deployments don't really have a notion of **State**. Instead they have a scope (be it a *Resource Group*, *Subscription* or *Management Group*) and a [**deployment mode**](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-modes) of either *incremental* or *complete*.
-
-
-### 5.4 Random database password
-
-Use the [`random_password`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) resource to generate the database password, rather than passing it in as a variable.
-
-Create the `random_password` resource in your `main.tf` file. You'll want to set `min_upper`, `min_lower` and `min_numeric` to at least 1 to make sure you satisfy [the password requirements for Azure databases](https://learn.microsoft.com/en-us/sql/relational-databases/security/password-policy?view=sql-server-ver16#password-complexity).
-
-Make sure the random password `result` is used by both the Database Server and App Service, then `apply` the changes.
-
-
-## (Stretch) Automate Seeding of the Database
-
-Notice [from our original setup script](./setup/deploy_scenario.ps1) that we had to use the `sqlcmd` tool to seed the database after it was created. Is this something we can manage within our Terraform scripts?
-
-<details><summary>Hint</summary>
-
-Consider using a [`local-exec` provisioner](https://developer.hashicorp.com/terraform/language/resources/provisioners/local-exec).
-
-</details>
-
-## (Stretch) Add a staging environment
-
-One of the big advantages of Infrastructure as Code is that it allows you to easily set up (and tear down) test environments that closely match your production infrastructure.
-Let's set up a staging environment that matches out current infrastructure using our Terraform config.
-
-We will need to give resources in our staging environment different names in Azure so they don't clash with our existing infrastructure.
-It's up to you how you do this, but a common way is to define a "prefix" variable and start all the names of your resources with that prefix, e.g `name = "${var.prefix}-terraformed-asp"`.
-If your existing resources don't have a common prefix, then your prefix can be the empty string for this set of infrastructure.
-
-Once you've done that, we need a way of managing separate environments from the same Terraform config. One way of managing multiple environments with Terraform is using [workspaces](https://www.terraform.io/docs/language/state/workspaces.html).
-Have a read of the documentation and create a new Terraform workspace.
-
-Bring up another copy of your infrastructure with a different prefix, in this new workspace.
-
-You'll need to find a way to migrate the data from the existing database across, or recreate it in the new database (it's only one table/row), as well as setting up a `azurerm_mssql_firewall_rule` so that the App Service can talk to the database.
