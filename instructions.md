@@ -39,6 +39,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+  resource_provider_registrations = "none"
   subscription_id = "<SUBSCRIPTION_ID>"
 }
 ```
