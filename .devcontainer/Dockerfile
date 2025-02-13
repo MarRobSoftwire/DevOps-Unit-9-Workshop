@@ -12,11 +12,3 @@ RUN echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
 https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
 tee /etc/apt/sources.list.d/hashicorp.list
 RUN apt update && apt-get install terraform
-
-# Install npm/Node
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - &&\
-apt-get install -y nodejs
-
-# Install Terraform CDK (and associate dependencies)
-RUN npm install --global cdktf-cli@latest
-RUN pip install --user pipenv

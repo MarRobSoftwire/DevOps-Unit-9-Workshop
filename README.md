@@ -14,3 +14,10 @@ Also, make sure you have installed the following:
   * Verify it is installed by running `terraform -version`
 * Install an extension for Terraform in VSCode
   * There are a few options, any will do, we just want syntax highlighting
+
+
+## Scenario
+
+Before starting the exercise you'll need to [setup the scenario on A Cloud Guru following the instructions here](./setup/workshop_scenario_setup.md)
+
+Once this is setup you can [start on the main instructions here](./instructions.md).
