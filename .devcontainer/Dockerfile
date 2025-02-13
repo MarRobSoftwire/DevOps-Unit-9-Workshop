@@ -14,7 +14,7 @@ tee /etc/apt/sources.list.d/hashicorp.list
 RUN apt update && apt-get install terraform
 
 # Install npm/Node
-RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - &&\
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - &&\
 apt-get install -y nodejs
 
 # Install Terraform CDK (and associate dependencies)
