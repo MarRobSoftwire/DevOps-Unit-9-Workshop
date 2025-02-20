@@ -3,10 +3,7 @@
 {
 	"name": "Python 3",
 	"runArgs": ["--init"],
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": "..",
-	},
+	"image": "corndeldevopscourse/unit-9-workshop-codespace",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
