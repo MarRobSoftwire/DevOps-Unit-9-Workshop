@@ -83,7 +83,7 @@ We will be basing our Terraform config on these existing resources.
 If you open up the existing App Service you should see a response like
 
 ```json
-{"currentDate":"Tuesday, 26 January 2025 10:31","status":"Successfully connected to the db containing info for Module 12 Workshop","deploymentMethod":"cli"}
+{"currentDate":"Tuesday, 26 January 2025 10:31","status":"Successfully connected to the db containing info for Unit 9 Workshop","deploymentMethod":"cli"}
 ```
 
 We're going to create a new instance of the App Service Plan and App Service that are managed by Terraform.
