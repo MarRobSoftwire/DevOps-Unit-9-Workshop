@@ -54,7 +54,7 @@ You should not add the `.terraform` directory to source control, although you ca
 
 We are not going to have Terraform manage the Resource Group, and will instead just tell Terraform that it exists with a `data` block.
 
-Add the following to your `main.tf`, using the resource group name relevant to your ACG sandbox.
+Add the following to your `main.tf`, using the resource group name relevant to your cloud sandbox.
 
 ```terraform
 data "azurerm_resource_group" "main" {
@@ -406,15 +406,15 @@ Next we're going to look at a couple of scenarios where we'd want to automate th
 
 CD Pipelines aren't just for deploying application code. Let's use Terraform to deploy infrastructure changes as well.
 
-The biggest challenge here is going to be authentication. The user credentials provided by ACG are designed for an interactive login via a prompt and is not designed to be used in automation scenarios. Instead we want to authenticate as a machine identity (called a **Service Principal**).
+The biggest challenge here is going to be authentication. The user credentials provided by Pluralsight are designed for an interactive login via a prompt and is not designed to be used in automation scenarios. Instead we want to authenticate as a machine identity (called a **Service Principal**).
 
-Conveniently ACG creates a service principal for you when setting up your cloud environment:
+Conveniently Pluralsight creates a service principal for you when setting up your cloud environment:
 
-![ACG Service Principal Credentials](./images/acg_service_principal.jpg)
+![Pluralsight Service Principal Credentials](./images/pluralsight_service_principal.jpg)
 
 The Client ID & Client Secret essentially act as the username and password.
 
-> Please note that the ACG cloud sandbox does not allow you to create your own service principals. Normally this would be done either via the Azure portal (under *App Registrations*) or via the command `az ad sp create-for-rbac`
+> Please note that the Pluralsight cloud sandbox does not allow you to create your own service principals. Normally this would be done either via the Azure portal (under *App Registrations*) or via the command `az ad sp create-for-rbac`
 
 [The instructions for authenticating via a service principal & Terraform can be found here.](https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure-with-service-principle?tabs=bash#specify-service-principal-credentials-in-environment-variables)
 * You can find your subscription ID on the resource group page (under "Essentials") and the Tenant ID by looking up "Entra ID" in the portal's search bar
