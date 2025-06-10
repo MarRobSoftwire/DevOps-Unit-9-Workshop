@@ -8,18 +8,18 @@ Once the sandbox is setup, login to the Azure portal and navigate to your resour
 
 ![Cloud Shell](../images/cloud_shell_button.jpg)
 
-From here you'll want to create a **Powershell** Cloud Shell. When the cloud shell is ready it should look something like this:
+From here you'll want to create a **Bash** Cloud Shell. When the cloud shell is ready it should look something like this:
 
 ![Manage Files](../images/manage_files_cloud_shell.jpg)
 
 From here click the **Manage Files** to upload the following scripts:
 * `scenario.bicep`
-* `deploy_scenario.ps1`
+* `deploy_scenario.sh`
 * `db_setup.sql`
 
 You can then create your scenario resources by running:
 ```
-./deploy_scenario.ps1
+bash deploy_scenario.sh
 ```
 
 You'll then be prompted to provide your resource group name, a prefix & a database password.
