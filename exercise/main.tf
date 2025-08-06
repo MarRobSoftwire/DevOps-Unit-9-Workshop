@@ -1,18 +1,3 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">=3.43.0"
-    }
-  }
-}
-
-provider "azurerm" {
-  features {}
-  resource_provider_registrations = "none"
-  subscription_id                 = "0cfe2870-d256-4119-b0a3-16293ac11bdc"
-}
-
 data "azurerm_resource_group" "main" {
   name = "1-18d74096-playground-sandbox"
 }
@@ -39,7 +24,7 @@ resource "azurerm_linux_web_app" "main" {
 
   app_settings = {
     "DEPLOYMENT_METHOD" = "Terraform"
-    "CONNECTION_STRING" = "Server=tcp:sandbox-non-iac-sqlserver.database.windows.net,1433;Initial Catalog=sandbox-non-iac-db;Persist Security Info=False;User ID=dbadmin;Password=${var.database_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    "CONNECTION_STRING" = "Server=tcp:${azurerm_mssql_server.main.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_server.main.name};Persist Security Info=False;User ID=${azurerm_mssql_server.main.administrator_login};Password=${random_password.db_password.result};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }
 }
 
@@ -49,7 +34,7 @@ resource "azurerm_mssql_server" "main" {
   location                     = data.azurerm_resource_group.main.location
   version                      = "12.0"
   administrator_login          = "dbadmin"
-  administrator_login_password = var.database_password
+  administrator_login_password = random_password.db_password.result
 }
 
 resource "azurerm_mssql_database" "main" {
@@ -62,4 +47,18 @@ resource "azurerm_mssql_database" "main" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "random_password" "db_password" {
+  length           = 32
+  min_lower        = 1
+  min_numeric      = 1
+  min_upper        = 1
+  min_special      = 1
+  override_special = "_%!"
+}
+
+output "password" {
+  value = nonsensitive(random_password.db_password.result)
+  sensitive = true
 }
