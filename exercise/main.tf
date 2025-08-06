@@ -2,8 +2,12 @@ data "azurerm_resource_group" "main" {
   name = "1-18d74096-playground-sandbox"
 }
 
+locals {
+  prefix = terraform.workspace == "prod" ? "prod" : terraform.workspace == "staging" ? "staging" : "sandbox"
+}
+
 resource "azurerm_service_plan" "main" {
-  name                = "${var.prefix}-terraformed-asp"
+  name                = "${local.prefix}-terraformed-asp"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
   os_type             = "Linux"
@@ -11,7 +15,7 @@ resource "azurerm_service_plan" "main" {
 }
 
 resource "azurerm_linux_web_app" "main" {
-  name                = "${var.prefix}-terraformed-app"
+  name                = "${local.prefix}-terraformed-app"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
   service_plan_id     = azurerm_service_plan.main.id
@@ -29,7 +33,7 @@ resource "azurerm_linux_web_app" "main" {
 }
 
 resource "azurerm_mssql_server" "main" {
-  name                         = "${var.prefix}-non-iac-sqlserver"
+  name                         = "${local.prefix}-non-iac-sqlserver"
   resource_group_name          = data.azurerm_resource_group.main.name
   location                     = data.azurerm_resource_group.main.location
   version                      = "12.0"
@@ -38,11 +42,11 @@ resource "azurerm_mssql_server" "main" {
 }
 
 resource "azurerm_mssql_database" "main" {
-  name         = "${var.prefix}-non-iac-db"
-  server_id    = azurerm_mssql_server.main.id
-  collation    = "SQL_Latin1_General_CP1_CI_AS"
-  max_size_gb  = 2
-  sku_name     = "Basic"
+  name        = "${local.prefix}-non-iac-db"
+  server_id   = azurerm_mssql_server.main.id
+  collation   = "SQL_Latin1_General_CP1_CI_AS"
+  max_size_gb = 2
+  sku_name    = "Basic"
 
   lifecycle {
     prevent_destroy = true
@@ -59,6 +63,6 @@ resource "random_password" "db_password" {
 }
 
 output "password" {
-  value = nonsensitive(random_password.db_password.result)
+  value     = nonsensitive(random_password.db_password.result)
   sensitive = true
 }
