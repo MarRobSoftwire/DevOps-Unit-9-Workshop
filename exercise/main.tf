@@ -3,7 +3,7 @@ data "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_service_plan" "main" {
-  name                = "sandbox-terraformed-asp"
+  name                = "${var.prefix}-terraformed-asp"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
   os_type             = "Linux"
@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "main" {
 }
 
 resource "azurerm_linux_web_app" "main" {
-  name                = "sandbox-terraformed-app"
+  name                = "${var.prefix}-terraformed-app"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
   service_plan_id     = azurerm_service_plan.main.id
@@ -29,7 +29,7 @@ resource "azurerm_linux_web_app" "main" {
 }
 
 resource "azurerm_mssql_server" "main" {
-  name                         = "sandbox-non-iac-sqlserver"
+  name                         = "${var.prefix}-non-iac-sqlserver"
   resource_group_name          = data.azurerm_resource_group.main.name
   location                     = data.azurerm_resource_group.main.location
   version                      = "12.0"
@@ -38,7 +38,7 @@ resource "azurerm_mssql_server" "main" {
 }
 
 resource "azurerm_mssql_database" "main" {
-  name         = "sandbox-non-iac-db"
+  name         = "${var.prefix}-non-iac-db"
   server_id    = azurerm_mssql_server.main.id
   collation    = "SQL_Latin1_General_CP1_CI_AS"
   max_size_gb  = 2

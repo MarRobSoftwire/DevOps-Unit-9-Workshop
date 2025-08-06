@@ -1,4 +1,3 @@
-variable "database_password" {
-  description = "Database password"
-  sensitive   = true
+variable "prefix" {
+  description = "Resource prefix"
 }
