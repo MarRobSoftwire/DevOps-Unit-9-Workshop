@@ -302,7 +302,7 @@ Let's try it out. Add a new file called `outputs.tf` (this file name is also jus
 
 ```terraform
 output "webapp_hostname" {
-  value = azurerm_linux_web_app.main.default_site_hostname
+  value = azurerm_linux_web_app.main.default_hostname
 }
 ```
 
