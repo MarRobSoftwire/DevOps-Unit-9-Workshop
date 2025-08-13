@@ -1,6 +1,10 @@
 name: Deploy
 run-name: Deploying ${{ github.repository }}
 
+env:
+  TF_VAR_resource_group: ${{ secrets.TF_VAR_resource_group }}
+  TF_VAR_subscription_id: ${{ secrets.TF_VAR_subscription_id }}
+
 defaults:
   run:
     working-directory: ./exercise

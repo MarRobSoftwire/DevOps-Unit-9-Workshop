@@ -1,6 +1,11 @@
 name: Validate TF
 run-name: Validating Terraform on ${{ github.event.number }}
 
+env:
+  TF_VAR_resource_group: ${{ secrets.TF_VAR_resource_group }}
+  TF_VAR_subscription_id: ${{ secrets.TF_VAR_subscription_id }}
+
+
 on:
   pull_request:
     branches:
