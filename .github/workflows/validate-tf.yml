@@ -1,5 +1,5 @@
-name: Deploy
-run-name: Deploying ${{ github.repository }}
+name: Validate TF
+run-name: Validating Terraform on ${{ github.event.number }}
 
 on:
   pull_request:
