@@ -28,14 +28,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check if sqlcmd is installed
-        id: check-sqlcmd
-        shell: pwsh
-        run: |
-          Set-GitHubOutput 'available' ($null -ne (Get-Command sqlcmd -ErrorAction SilentlyContinue))
-
       - name: install sqlcmd
-        if: runner.os == 'Linux' && steps.check-sqlcmd.outputs.available != 'true'
         shell: bash
         run: |
           curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
