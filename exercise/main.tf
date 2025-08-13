@@ -53,6 +53,13 @@ resource "azurerm_mssql_database" "main" {
   }
 }
 
+resource "azurerm_mssql_firewall_rule" "main" {
+  name             = "${local.prefix}-FirewallRule1"
+  server_id        = azurerm_mssql_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "255.255.255.255"
+}
+
 resource "random_password" "db_password" {
   length           = 32
   min_lower        = 1
