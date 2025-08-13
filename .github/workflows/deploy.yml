@@ -1,0 +1,31 @@
+name: Deploy
+run-name: Deploying ${{ github.repository }}
+
+defaults:
+  run:
+    working-directory: ./exercise
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    name: Deploy
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform
