@@ -1,6 +1,11 @@
 name: Deploy
 run-name: Deploying ${{ github.repository }}
 
+on:
+  pull_request:
+    branches:
+      - main
+
 defaults:
   run:
     working-directory: ./exercise
