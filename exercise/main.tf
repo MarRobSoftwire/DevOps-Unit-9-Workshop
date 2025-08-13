@@ -1,9 +1,9 @@
 data "azurerm_resource_group" "main" {
-  name = "1-18d74096-playground-sandbox"
+  name = var.resource_group
 }
 
 locals {
-  prefix = terraform.workspace == "prod" ? "prod" : terraform.workspace == "staging" ? "staging" : "sandbox"
+  prefix = terraform.workspace == "prod" ? "prod" : terraform.workspace == "staging" ? "staging" : "test"
 }
 
 resource "azurerm_service_plan" "main" {
