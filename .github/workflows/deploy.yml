@@ -1,0 +1,37 @@
+name: Deploy
+run-name: Deploying ${{ github.repository }}
+
+env:
+  TF_VAR_resource_group: ${{ secrets.TF_VAR_resource_group }}
+  TF_VAR_subscription_id: ${{ secrets.TF_VAR_subscription_id }}
+
+on:
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    working-directory: ./exercise
+
+jobs:
+  release:
+    name: Deploy
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve
