@@ -69,7 +69,24 @@ resource "random_password" "db_password" {
   override_special = "_%!"
 }
 
-output "password" {
-  value     = nonsensitive(random_password.db_password.result)
-  sensitive = true
+resource "null_resource" "run_sqlcmd" {
+  provisioner "local-exec" {
+    command = <<EOT
+      sqlcmd      
+        -S ${azurerm_mssql_server.main.fully_qualified_domain_name}
+        -d ${azurerm_mssql_database.main.name}
+        -U ${azurerm_mssql_server.main.administrator_login}
+        -P "${random_password.db_password.result}"
+        -i ../setup/db_setup.sql
+    EOT
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [
+    azurerm_mssql_database.main,
+    azurerm_mssql_server.main
+  ]
 }
