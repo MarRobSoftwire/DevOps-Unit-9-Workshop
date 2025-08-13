@@ -5,17 +5,13 @@ env:
   TF_VAR_resource_group: ${{ secrets.TF_VAR_resource_group }}
   TF_VAR_subscription_id: ${{ secrets.TF_VAR_subscription_id }}
 
-defaults:
-  run:
-    working-directory: ./exercise
-
-permissions:
-  contents: write
-  pull-requests: write
-
 on:
   push:
     branches: [main]
+
+defaults:
+  run:
+    working-directory: ./exercise
 
 jobs:
   release:
@@ -36,4 +32,6 @@ jobs:
         id: init
         run: terraform init -input=false
 
-      - name: Terraform
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve
